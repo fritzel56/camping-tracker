@@ -1,0 +1,4 @@
+pandas
+google-cloud-bigquery
+pyarrow
+mailjet_rest
