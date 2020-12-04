@@ -8,7 +8,7 @@ import pandas as pd
 from mailjet_rest import Client
 
 
-BASE_URL =
+BASE_URL = os.environ['base_url']
 
 
 def send_email(email):
