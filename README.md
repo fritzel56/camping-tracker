@@ -44,3 +44,4 @@ Key environment variables:
 * base_url: URL to source the data from
 * dataset: the dataset in BigQuery where data is being store
 * table_name: the name of the table in BigQuery where data is being store
+* project_id: Name of the Google Cloud project associated with the BigQuery datasets.
