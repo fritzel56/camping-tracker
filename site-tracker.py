@@ -147,9 +147,10 @@ def compose_summary_email(df):
 
 
 def kickoff():
+    project_id = os.environ['project_id']
     client = bigquery.Client()
-    dataset = os.environ['DATASET']
-    table_name = os.environ['TABLE_NAME']
+    dataset = os.environ['dataset']
+    table_name = os.environ['table_name']
     dataset_ref = client.dataset(dataset)
     table_name_ref = bigquery.TableReference(dataset_ref,
                                                 table_name)
@@ -171,7 +172,10 @@ def kickoff():
     df = df[['site', 'date', 'availability']]
     df['now'] = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     sql = '''
-    '''
+        SELECT yurt_name, availability_date, availability
+        FROM `{0}.{1}.{2}`
+        WHERE snap_date = (SELECT max(snap_date) FROM `{0}.{1}.{2}`)
+    '''.format(project_id, dataset, table_name)
     df_last_data = get_bq_data(sql, client)
     df_merged = df_last_data.merge(df, left_on=['yurt_name', 'availability_date'], right_on=['site', 'date'])
     # newly available
