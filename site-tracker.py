@@ -10,9 +10,6 @@ import pandas as pd
 from mailjet_rest import Client
 
 
-BASE_URL = os.environ['base_url']
-
-
 def error_composition():
     """Composes an email in the event of an exception with exception details.
     Returns:
@@ -98,7 +95,7 @@ def site_url(start_date, end_date, resourceId):
     # format to strings for URL string
     start_date = start_date.strftime('%Y-%m-%d')
     end_date = end_date.strftime('%Y-%m-%d')
-    url = BASE_URL.format(resourceId, start_date, end_date)
+    url = os.environ['base_url'].format(resourceId, start_date, end_date)
     return url
 
 
