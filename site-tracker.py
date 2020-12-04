@@ -121,8 +121,10 @@ def compose_summary_email(df):
     contact_email = os.environ['contact_email']
     contact_name = os.environ['contact_name']
     body = ''
+    df.sort_values(by=['date'], inplace=True)
     for site in df.site.unique():
-        body = body+site+' is available on these dates:<br /><br />{}<br /><br /><br />'.format(df.loc[df.site == site].to_html(columns=['date'], header=False, index=False))
+        body = body+site+' is available on these dates:<br /><br />{}<br /><br /><br />'.format(df.loc[df.site == site].to_html(columns=['date_str'], header=False, index=False))
+    body = body.replace('&lt;', '<').replace('&gt;', '>')
     data = {
         'Messages': [
             {
@@ -136,7 +138,7 @@ def compose_summary_email(df):
                         "Name": contact_name
                     }
                 ],
-                "Subject": "Current Site Availability",
+                "Subject": "Current Yurt Availability",
                 "HTMLPart": body,
             }
         ]
@@ -169,11 +171,9 @@ def kickoff():
     df = df[['site', 'date', 'availability']]
     df['now'] = dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     sql = '''
-        
     '''
     df_last_data = get_bq_data(sql, client)
-    write_to_gbq(df, client, site_data_table)
-    df_merged = df_last_data.merge(df, left_on=['site_name', 'availability_date'], right_on=['site', 'date'])
+    df_merged = df_last_data.merge(df, left_on=['yurt_name', 'availability_date'], right_on=['site', 'date'])
     # newly available
     available = df_merged.loc[(df_merged.availability_x != 0) & (df_merged.availability_y == 0)]
     for site in available.site.unique():
@@ -184,12 +184,17 @@ def kickoff():
     for site in booked.site.unique():
         print('{} is newly booked on:'.format(site))
         print(booked.loc[booked.site == site, 'date'].to_list())
+    if (len(booked)>0) | (len(available)>0):
+        write_to_gbq(df, client, site_data_table)
     same = df_merged.loc[(df_merged.availability_x == df_merged.availability_y)]
     for site in same.site.unique():
         print('{} is the same on:'.format(site))
         print(same.loc[same.site == site, 'date'].to_list())
-    currently_available = df.loc[df.availability == 0]
+    currently_available = df_merged.loc[df_merged.availability_y == 0]
+    currently_available['date_str']=currently_available.date.apply(str)
     if len(available) > 0:
+        mask = (currently_available.availability_x != 0) & (df_merged.availability_y == 0)
+        currently_available.loc[mask, 'date_str'] = '<span style="background-color: #BFFF00">'+currently_available.loc[mask, 'date_str']+'</span>'
         email = compose_summary_email(currently_available)
         send_email(email)
 
