@@ -2,6 +2,8 @@ import datetime as dt
 import urllib.request as urllib2
 import json
 import yaml
+import sys
+import traceback
 from google.cloud import bigquery
 import os
 import pandas as pd
@@ -9,6 +11,36 @@ from mailjet_rest import Client
 
 
 BASE_URL = os.environ['base_url']
+
+
+def error_composition():
+    """Composes an email in the event of an exception with exception details.
+    Returns:
+        dict: data structure containing the composed email ready for MJ's API
+    """
+    contact_email = os.environ['contact_email']
+    contact_name = os.environ['contact_name']
+    err = sys.exc_info()
+    err_message = traceback.format_exception(*err)
+    data = {
+        'Messages': [
+            {
+                "From": {
+                    "Email": contact_email,
+                    "Name": contact_name
+                },
+                "To": [
+                    {
+                        "Email": contact_email,
+                        "Name": contact_name
+                    }
+                ],
+                "Subject": "There was an error with the yurt tracker run",
+                "HTMLPart": "There was an error with the yurt tracker run: {} ".format(err_message),
+            }
+        ]
+    }
+    return data
 
 
 def send_email(email):
@@ -112,7 +144,7 @@ def compose_summary_email(df):
     return data
 
 
-def main(request):
+def kickoff():
     client = bigquery.Client()
     dataset = os.environ['DATASET']
     table_name = os.environ['TABLE_NAME']
@@ -159,4 +191,19 @@ def main(request):
     currently_available = df.loc[df.availability == 0]
     if len(available) > 0:
         email = compose_summary_email(currently_available)
+        send_email(email)
+
+
+def main(request):
+    """Function which orchestrates the rest of the code
+    Args:
+        request: passed as part of the Google Function orchestration service.
+            Not used.
+    """
+    try:
+        # try to run the main body of code
+        kickoff()
+    except Exception:
+        # if it fails. capture the exception and send out a summary email.
+        email = error_composition()
         send_email(email)
