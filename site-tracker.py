@@ -30,11 +30,13 @@ def site_url(start_date, end_date, resourceId):
 
 
 def get_result(start_date, end_date, resourceId):
-    '''queries the website and returns the result as a list of dictionaries
-    Inputs:
+    '''Queries the website and returns the result as a list of dictionaries.
+
+    Args:
         start_date (datetime): the first date we want availability results for
         end_date (datetime): the last date we want availability data for
         resourceId (str): the number associated with the site of interest
+
     Returns:
         list: a list of dictionaries containing availability info
     '''
@@ -45,6 +47,8 @@ def get_result(start_date, end_date, resourceId):
 
 
 def kickoff():
+    """Main orchestrator.
+    """
     project_id = os.environ['project_id']
     client = bigquery.Client()
     dataset = os.environ['dataset']
@@ -87,6 +91,14 @@ def kickoff():
 
 
 def summary_email_body(all_available):
+    """Composes the email body showing current availability.
+
+    Args:
+        all_available (df): df with just the current availability. Includes a column with proper HTML formatting.
+
+    Returns:
+        str: HTML formatted string which will be the body of the email
+    """
     body = ''
     body_base = '{} is available on these dates:<br /><br />{}<br /><br /><br />'
     for site in all_available.site.unique():
@@ -99,6 +111,15 @@ def summary_email_body(all_available):
 
 
 def compose_summary_email(newly_available, df_merged):
+    """Composes an email showing current availability.
+
+    Args:
+        newly_available (df): df with just the most dates which are newly available
+        df_merged (df): df containing all current and previous availability
+
+    Returns:
+        dict: dict formatted to MailJet API requirements
+    """
     # create a table with all currently available days
     all_available = df_merged.loc[df_merged.availability_y==0].copy(deep=True)
     all_available['dt_str'] = all_available.date.apply(str)
@@ -133,6 +154,7 @@ def error_email_body():
 
 def main(request):
     """Function which orchestrates the rest of the code
+
     Args:
         request: passed as part of the Google Function orchestration service.
             Not used.
