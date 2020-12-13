@@ -4,6 +4,8 @@ Set this up after discovering that a campsite I was interested in was all booked
 ## File Overview
 | File | Description |
 |------|-------------|
+| email_helpers.py | Contains functions to send emails with the MailJet API.  |
+| google_helpers.py | Contains functions use to query and write to BigQuery. |
 | requirements.txt | Packages needed to run the code. |
 | site-tracker.py | Code scrapes the websites, formats the results, and prints out current availability. |
 
