@@ -2,3 +2,4 @@ pandas
 google-cloud-bigquery
 pyarrow
 mailjet_rest
+google-cloud-bigquery-storage
