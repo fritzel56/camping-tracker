@@ -8,6 +8,7 @@ from google.cloud import bigquery
 import os
 import pandas as pd
 from mailjet_rest import Client
+import google_helpers as gh
 
 
 def error_composition():
@@ -51,36 +52,6 @@ def send_email(email):
     mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     result = mailjet.send.create(data=email)
     print(result)
-
-
-def get_bq_data(sql, client):
-    """Queries BQ for the most recent entry for each ETF
-
-    Args:
-        sql (str): the query to be run.
-        client (client): client to connect to BQ.
-
-    Returns:
-        df: The most recent recorded returns for each ETF
-    """
-    return client.query(sql).result().to_dataframe()
-
-
-def write_to_gbq(data, client, table):
-    """Takes in a dataframe and writes the values to BQ
-
-    Args:
-        data (df): the dataframe to be written
-        client (client): client to connect to BQ.
-        table (str): the table to be written to.
-    """
-    # convert to list of lists
-    rows_to_insert = data.values.tolist()
-    # write data
-    errors = client.insert_rows(table, rows_to_insert)
-    if errors != []:
-        print(errors)
-        assert errors == [], 'There were errors writing data see above.'
 
 
 def site_url(start_date, end_date, resourceId):
@@ -173,7 +144,7 @@ def kickoff():
         FROM `{0}.{1}.{2}`
         WHERE snap_date = (SELECT max(snap_date) FROM `{0}.{1}.{2}`)
     '''.format(project_id, dataset, table_name)
-    df_last_data = get_bq_data(sql, client)
+    df_last_data = gh.get_bq_data(sql, client)
     df_merged = df_last_data.merge(df, left_on=['yurt_name', 'availability_date'], right_on=['site', 'date'])
     # newly available
     available = df_merged.loc[(df_merged.availability_x != 0) & (df_merged.availability_y == 0)]
@@ -186,7 +157,7 @@ def kickoff():
         print('{} is newly booked on:'.format(site))
         print(booked.loc[booked.site == site, 'date'].to_list())
     if (len(booked)>0) | (len(available)>0):
-        write_to_gbq(df, client, site_data_table)
+        gh.write_to_gbq(df, client, site_data_table)
     same = df_merged.loc[(df_merged.availability_x == df_merged.availability_y)]
     for site in same.site.unique():
         print('{} is the same on:'.format(site))
