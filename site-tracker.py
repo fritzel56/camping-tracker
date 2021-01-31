@@ -101,7 +101,9 @@ def summary_email_body(all_available):
     """
     body = ''
     body_base = '{} is available on these dates:<br /><br />{}<br /><br /><br />'
-    for site in all_available.site.unique():
+    sites = all_available.site.unique()
+    sites.sort(axis=0)
+    for site in sites:
         site_df = all_available.loc[all_available.site == site]
         future = site_df.date >  dt.datetime.today().date()
         site_df = site_df.loc[future]
