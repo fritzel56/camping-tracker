@@ -117,7 +117,7 @@ def summary_email_body(all_available):
         site_df = all_available.loc[all_available.site == site]
         future = site_df.date >  dt.datetime.today().date()
         site_df = site_df.loc[future]
-        table = site_df.to_html(columns=['dt_str'], header=False,
+        table = site_df.to_html(columns=['dow', 'dt_str'], header=False,
                                 index=False)
         body = body + body_base.format(site, table)
     body = body.replace('&lt;', '<').replace('&gt;', '>')
@@ -137,12 +137,14 @@ def compose_summary_email(newly_available, df_merged):
     # create a table with all currently available days
     all_available = df_merged.loc[df_merged.availability_y==0].copy(deep=True)
     all_available['dt_str'] = all_available.date.apply(str)
+    all_available['dow'] = all_available.date.apply(lambda x: x.strftime("%A"))
     # add HTML code to highlight the newly available days
     mask = ((all_available.availability_x != 0) &
             (df_merged.availability_y == 0))
     hls = '<span style="background-color: #BFFF00">'
     hle = '</span>'
     all_available.loc[mask, 'dt_str'] = hls + all_available.loc[mask, 'dt_str'] + hle
+    all_available.loc[mask, 'dow'] = hls + all_available.loc[mask, 'dow'] + hle
     all_available.sort_values(by=['date'], inplace=True)
     # Compose the actual text for the body of the email
     body = summary_email_body(all_available)
