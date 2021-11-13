@@ -66,8 +66,8 @@ def kickoff():
     table_name_ref = bigquery.TableReference(dataset_ref,
                                                 table_name)
     site_data_table = client.get_table(table_name_ref)
-    start_date = dt.datetime.strptime('2020-12-01', '%Y-%m-%d').date()
-    end_date = dt.datetime.strptime('2021-04-12', '%Y-%m-%d').date()
+    start_date = dt.datetime.strptime('2021-11-15', '%Y-%m-%d').date()
+    end_date = dt.datetime.strptime('2022-04-15', '%Y-%m-%d').date()
     results = []
     with open('sites.yaml') as yaml_file:
         sites = yaml.load(yaml_file, Loader=yaml.FullLoader)
@@ -92,7 +92,8 @@ def kickoff():
     # newly available
     newly_available = df_merged.loc[(df_merged.availability_x != 0) & (df_merged.availability_y == 0)]
     booked = df_merged.loc[(df_merged.availability_x != 1) & (df_merged.availability_y == 1)]
-    if (len(booked)>0) | (len(newly_available)>0):
+    # only write if there's been a change in bookings or it's a new period
+    if (len(booked)>0) | (len(newly_available)>0) | (len(df_merged)==0):
         gh.write_to_gbq(df, client, site_data_table)
     if len(newly_available) > 0:
         email = compose_summary_email(newly_available, df_merged)
