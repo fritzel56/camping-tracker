@@ -95,6 +95,7 @@ def kickoff():
     # only write if there's been a change in bookings or it's a new period
     if (len(booked)>0) | (len(newly_available)>0) | (len(df_merged)==0):
         gh.write_to_gbq(df, client, site_data_table)
+    # only compose email if there is new availability
     if len(newly_available) > 0:
         email = compose_summary_email(newly_available, df_merged)
         eh.send_email(email)
