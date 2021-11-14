@@ -88,6 +88,7 @@ def kickoff():
         WHERE snap_date = (SELECT max(snap_date) FROM `{0}.{1}.{2}`)
     '''.format(project_id, dataset, table_name)
     df_last_data = gh.get_bq_data(sql, client)
+    # join new data with most recent historical data
     df_merged = df_last_data.merge(df, left_on=['yurt_name', 'availability_date'], right_on=['site', 'date'])
     # newly available
     newly_available = df_merged.loc[(df_merged.availability_x != 0) & (df_merged.availability_y == 0)]
