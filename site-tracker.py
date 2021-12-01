@@ -168,7 +168,6 @@ def error_email_body():
     err_message = traceback.format_exception(*err)
     err_str = '<br>'.join(err_message)
     err_str = err_str.replace('\n', '')
-
     body = "There was an error with a yurt tracker run: {}".format(err_message)
     return body
 
